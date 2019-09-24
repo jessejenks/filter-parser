@@ -66,8 +66,18 @@ concept
 `unknown`
     didn't match anything
 
-
 ### The Grammar
+I really wanted my language to be typed. However this is quite difficult,
+especially since this needs to run in real time on a browser. So instead, I
+tried to bake types into the language itself.
+
+Since this language is specifically for filtering, the type of the entire parse
+tree needs to be a boolean. A boolean expression can in turn be made up of other
+boolean expressions with basic logical connectives ("and", "or", "not"). But a
+boolean expression can _also_ be the result of comparing two expressions of the
+same type. In this case dates and numbers. I had to rework the language a few
+times so that only expressions of the same type can be compared to one another.
+
 | Production Rules| |
 | --- | --- |
 | BooleanExpression | Disjunction ; |
