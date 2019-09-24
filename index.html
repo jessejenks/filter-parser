@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Filter Parser</title>
+    <script src="utils.js"></script>
+    <script src="FilterTokenizer.js"></script>
+    <script src="FilterParser.js"></script>
+    <script src="toHtml.js"></script>
+    <script src="Interpreter.js"></script>
+    <style type="text/css">
+        :root {
+            --mariana-black: #000;
+            --mariana-blue: #6699cc;
+            --mariana-blue2: #4e5a65;
+            --mariana-blue3: #343d46;
+            --mariana-blue4: #647382;
+            --mariana-blue5: #5fb4b4;
+            --mariana-blue6: #a6acb9;
+            --mariana-green: #99c794;
+            --mariana-grey: #333;
+            --mariana-orange: #f9ae58;
+            --mariana-orange2: #ee932b;
+            --mariana-orange3: #fac761;
+            --mariana-pink: #c695c6;
+            --mariana-red: #ec5f66;
+            --mariana-red2: #f97b58;
+            --mariana-white: #fff;
+            --mariana-white2: #f7f7f7;
+            --mariana-white3: #d8dee9;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: var(--mariana-blue2);
+        }
+
+        #search-input-container {
+            position: relative;
+
+            --highlight-color: var(--mariana-blue6);
+            --margin-top-bottom: 2rem;
+            --margin-left-right: 4rem;
+            margin: var(--margin-top-bottom) var(--margin-left-right);
+            display: flex;
+            min-width: 300px;
+            width: calc(100% - 2*var(--margin-left-right));
+
+            --font-size: 18px;
+            --padding-top-bottom: 2rem;
+            --padding-left-right: 3rem;
+
+            /*height: calc(var(--font-size) + 2*var(--padding-top-bottom));*/
+
+            --font-style: var(--font-size) monospace;
+            --padding: var(--padding-top-bottom) var(--padding-left-right);
+        }
+
+
+        #search-input {
+            font: var(--font-style);
+            background: transparent;
+            color: transparent;
+            
+            width: 100%;
+            min-height: 100%;
+            border: none;
+            padding: var(--padding);
+            caret-color: var(--mariana-orange);
+            outline: none;
+            resize: none;
+            /*white-space: pre-line;*/
+            overflow: hidden;
+        }
+
+        #highlighted-text {
+            font: var(--font-style);
+            background-color: var(--mariana-blue3);
+            color: var(--mariana-white3);
+            padding: var(--padding);
+            width: 100%;
+            border-radius: .5rem;
+            position: absolute;
+            z-index: -1;
+            white-space: pre-wrap;
+        }
+
+        #highlighted-text span.whitespace,
+        #highlighted-text-parsed span.whitespace {
+            white-space: pre;
+        }
+
+        #highlighted-text span.date-literal,
+        #highlighted-text span.invalid-date-literal,
+        #highlighted-text-parsed span.date-literal,
+        #highlighted-text-parsed span.invalid-date-literal {
+            color: var(--mariana-green);
+        }
+
+        #highlighted-text span.number-literal,
+        #highlighted-text-parsed span.number-literal {
+            color: var(--mariana-orange);
+        }
+
+        #highlighted-text span.left-paren,
+        #highlighted-text span.right-paren,
+        #highlighted-text span.punctuation,
+        #highlighted-text-parsed span.left-paren,
+        #highlighted-text-parsed span.right-paren,
+        #highlighted-text-parsed span.punctuation {
+            color: var(--mariana-blue6);
+        }
+
+        #highlighted-text span.binary-predicate,
+        #highlighted-text-parsed span.binary-predicate {
+            color: var(--mariana-red2);
+        }
+
+        #highlighted-text span.begin-variable,
+        #highlighted-text-parsed span.begin-variable {
+            color: var(--mariana-blue5);
+        }
+
+        #highlighted-text span.variable,
+        #highlighted-text-parsed span.variable {
+            color: var(--mariana-blue);
+            font-style: italic;
+        }
+
+        #highlighted-text span.binary-connective,
+        #highlighted-text span.negation,
+        #highlighted-text-parsed span.binary-connective,
+        #highlighted-text-parsed span.negation {
+            color: var(--mariana-pink);
+        }
+
+        #highlighted-text span.tag,
+        #highlighted-text-parsed span.tag {
+            color: var(--mariana-white3);
+        }
+
+        #highlighted-text span.tag-literal,
+        #highlighted-text-parsed span.tag-literal {
+            color: var(--mariana-orange3);
+            white-space: pre;
+        }
+
+        #highlighted-text span.boolean-literal,
+        #highlighted-text-parsed span.boolean-literal {
+            color: var(--mariana-red);
+        }
+
+        #highlighted-text span.unknown,
+        #highlighted-text-parsed span.unknown {
+            color: var(--mariana-white3);
+        }
+
+        #highlighted-text span.unknown,
+        #highlighted-text span.invalid-date-literal,
+        #highlighted-text-parsed span.unknown,
+        #highlighted-text-parsed span.invalid-date-literal {
+            border-bottom: 2px solid var(--mariana-red);
+        }
+
+        #highlighted-text span.floating-paren {
+            /*position: absolute;*/
+            display: none;
+        }
+
+        #highlighted-text-parsed span.floating-paren {
+            position: absolute;
+            color: var(--mariana-blue4);
+            z-index: -1;
+        }
+
+        /* https://css-tricks.com/overriding-the-default-text-selection-color-with-css/ */
+        /* Gecko Browsers */
+        #search-input-container #search-input::-moz-selection {
+            background: var(--highlight-color); 
+        }
+
+        /* WebKit/Blink Browsers */
+        #search-input-container #search-input::selection {
+            background: var(--highlight-color); 
+        }
+
+        #error-messages {
+            min-height: 2rem;
+        }
+
+        #evaluated-expression {
+            position: relative;
+            display: flex;
+            max-width: 500px;
+            --tiny-font-size: 12px;
+            --padding-top-bottom: var(--tiny-font-size);
+            --padding-left-right: calc(2*var(--tiny-font-size));
+
+            height: calc(var(--tiny-font-size) + 2*var(--padding-top-bottom));
+        }
+
+        #highlighted-text-parsed {
+            width: 100%;
+            height: 100%;
+            color: var(--mariana-white3);
+            padding: var(--padding-top-bottom) var(--padding-left-right);
+            font: var(--tiny-font-size) monospace;
+        }
+
+        div#fade {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.25);
+            border-radius: 0.5rem;
+        }
+
+        #posts-list {
+            color: white;
+        }
+
+        #posts-list li.post.hidden-post {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="search-input-container">
+        <span id="height-controller" style="min-height: 10px"></span>
+        <span
+            id="highlighted-text"
+            contenteditable
+        ></span>
+        <textarea
+            id="search-input"
+            spellcheck="false"
+            placeholder="ok and nice or cool"
+        ></textarea>
+    </div>
+    <div id="error-messages"></div>
+    
+    <div>Evaluating</div>
+    <div id="evaluated-expression">
+        <span id="highlighted-text-parsed"></span>
+        <div id="fade"></div>
+    </div>
+    <ul id="posts-list"></ul>
+</body>
+<script type="text/javascript">
+    const posts = [
+        {
+            id: 1,
+            title: "very ok",
+            tags: ["ok"],
+            date: "09-01-2019",
+            numWords: 20
+        },
+        {
+            id: 2,
+            title: "mediocre but long post",
+            tags: ["cool", "neat"],
+            date: "08-20-2019",
+            numWords: 200
+        },
+        {
+            id: 3,
+            title: "hellow nice post",
+            tags: ["neat", "wow", "two words"],
+            date: "08-20-2019",
+            numWords: 200
+        },
+        {
+            id: 4,
+            title: "wrote this yesterday",
+            tags: ["nice"],
+            date: "09-23-2019",
+            numWords: 10
+        }
+    ];
+
+    const postsList = document.querySelector("#posts-list");
+
+    for (let i= 0; i<posts.length; i++) {
+        const li = document.createElement("li");
+        li.id = `${posts[i].title.replace(/\s/g, "")}-${posts[i].id}`;
+        li.classList.add("post")
+        li.appendChild(document.createTextNode(`${posts[i].title} - [${posts[i].tags.join(', ')}]`));
+
+        postsList.appendChild(li);
+    }
+
+    const tags = posts.reduce((acc, curr) => acc.concat(curr.tags), []);
+
+    let myParser = new FilterParser(tags);
+
+    const searchInput = document.querySelector("#search-input");
+    const highlightedText = document.querySelector("#highlighted-text");
+    const highlightedTextParsed = document.querySelector("#highlighted-text-parsed");
+    const errorMessages   = document.querySelector("#error-messages");
+    const heightController = document.querySelector("#height-controller");
+
+    let currHeight = 0;
+    checkSize();
+
+    searchInput.onkeypress = function(event) {
+        if (event.code === "Enter") {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            return false;
+        }
+    }
+
+    searchInput.onkeyup = function(event) {   
+        const text = event.target.value;
+        highlightAndParse(text);
+    }
+
+    highlightAndParse(searchInput.value)
+    
+    function highlightAndParse(text) {
+        if (text === "") {
+            highlightedText.innerText = ""
+            highlightedText.innerHTML = ""
+            highlightedTextParsed.innerText = ""
+            highlightedTextParsed.innerHTML = ""
+            for (let i = 0; i<posts.length; i++) {
+                document.querySelector(`#${posts[i].title.replace(/\s/g, "")}-${posts[i].id}`)
+                    .classList.toggle('hidden-post', false);
+            }
+            errorMessages.classList.toggle('errors', false)
+            errorMessages.classList.toggle('warning', false)
+            errorMessages.innerText = '';
+        } else {
+            highlightedText.innerHTML = highlight(text);
+        }
+
+        checkSize();
+    }
+
+    /*
+    // not a reliable enough check to decide whether to reparse text
+    function isPrintableCharacter(event) {
+        return event.key? event.key.length === 1 || event.key === "Backspace" : true;
+    }
+    */
+
+    /*
+    // stopped allowing newlines, so no longer needed
+    // but here just in case
+    function handleNewlines(text) {
+        return text.replace(/\n/, '<br/>')
+    }
+    */
+
+    function highlight(text) {
+        myParser.setInput(text);
+
+        try {
+            const parse = myParser.parse();
+            
+            highlightedTextParsed.innerHTML = parseTreeToHtml(parse);
+
+            for (let i = 0; i<posts.length; i++) {
+                document.querySelector(`#${posts[i].title.replace(/\s/g, "")}-${posts[i].id}`)
+                    .classList.toggle('hidden-post', !interpretParseTree(parse, posts[i]));
+            }
+
+            errorMessages.classList.toggle('errors', false)
+            errorMessages.classList.toggle('warning', false)
+            errorMessages.innerText = '';
+        } catch (err) {
+            errorMessages.classList.toggle('errors', true)
+            errorMessages.classList.toggle('warning', err.name === "Warning")
+            errorMessages.innerText = err.message;
+        }
+
+        return myParser.getTokenSpans();
+    }
+
+    window.onresize = function(event) {
+        checkSize();
+    }
+
+    function checkSize() {
+        const h = highlightedText.getBoundingClientRect().height;
+        if (h !== currHeight) {
+            currHeight = h;
+            heightController.style = `height: ${currHeight}px;`
+        }
+    }
+</script>
+</html>
