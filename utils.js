@@ -90,7 +90,3 @@ function isOfTypeAndSymbol(type, symbol, token) {
 function isOfType(type, token) {
     return (token && token.type === type) || false;
 }
-
-function debugLog(method, ...args) {
-    // console.log(`%c${method}`, 'color: red; background-color: black; padding: 1em;', ...args);
-}

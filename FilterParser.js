@@ -141,13 +141,11 @@ class FilterParser {
     comparison() {
         let comparison = this.dateComparison();
         if (comparison !== undefined) {
-            debugLog('comparison date comparison', comparison)
             return comparison;
         }
 
         comparison = this.numberComparison();
         if (comparison !== undefined) {
-            debugLog('comparison number comparison', comparison)
             return comparison ;
         }
     }
@@ -233,7 +231,6 @@ class FilterParser {
     }
 
     consume() {
-        debugLog('consume()', 'tokenizer !== null?', this.tokenizer !== null, '!tokenizer.eof()?', !this.tokenizer.eof())
         if (this.tokenizer !== null) {// && !this.tokenizer.eof()) {
             this.tokenizer.next();
         }

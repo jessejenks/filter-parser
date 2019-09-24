@@ -281,10 +281,8 @@ class Tokenizer {
         while (count < 1000 && !this.eof()) {
             try {
                 currToken = this.next();
-                // debugLog(currToken)
             } catch(err) {
-                console.log(err)
-                // errors.push(err);
+                console.log(err);
             }
 
             if (currToken.type === "date-variable") {
