@@ -108,7 +108,7 @@ class Tokenizer {
 
         let endQuote = this.readOneCharacterIfRegEx(/"/);
         if (endQuote === null) {
-            endQuote = "";
+            return this.tokenOfType('unknown', startQuote+rest, spaceBefore);
         }
 
         return this.tokenOfType('tag-literal', startQuote+rest+endQuote, spaceBefore);

@@ -8,6 +8,16 @@
     <script src="FilterParser.js"></script>
     <script src="toHtml.js"></script>
     <script src="Interpreter.js"></script>
+
+    <script src="tests.js"></script>
+    <script type="text/javascript">
+        /* Uncomment to run tests */
+        /*
+        tokenizerTest()
+        parserTest()
+        */
+    </script>
+
     <style type="text/css">
         :root {
             --mariana-black: #000;
@@ -52,13 +62,9 @@
             width: calc(100% - 2*var(--margin-left-right));
 
             --font-size: 18px;
-            --padding-top-bottom: 2rem;
-            --padding-left-right: 3rem;
-
-            /*height: calc(var(--font-size) + 2*var(--padding-top-bottom));*/
 
             --font-style: var(--font-size) monospace;
-            --padding: var(--padding-top-bottom) var(--padding-left-right);
+            --padding: 2rem 3rem;
         }
 
 
@@ -74,7 +80,6 @@
             caret-color: var(--mariana-orange);
             outline: none;
             resize: none;
-            /*white-space: pre-line;*/
             overflow: hidden;
         }
 
@@ -220,11 +225,19 @@
             border-radius: 0.5rem;
         }
 
-        #posts-list {
+        ul#posts-list {
             color: white;
+            margin: 0 2rem;
+            display: flex;
+            flex-direction: column;
         }
 
-        #posts-list li.post.hidden-post {
+        ul#posts-list li.post {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        ul#posts-list li.post.hidden-post {
             display: none;
         }
     </style>
@@ -280,18 +293,47 @@
             tags: ["nice"],
             date: "09-23-2019",
             numWords: 10
+        },
+        {
+            id: 5,
+            title: "hellow v nice",
+            tags: ["nice", "two words", "very long and nice tag"],
+            date: "01-01-2019",
+            numWords: 100
         }
     ];
 
     const postsList = document.querySelector("#posts-list");
 
     for (let i= 0; i<posts.length; i++) {
-        const li = document.createElement("li");
-        li.id = `${posts[i].title.replace(/\s/g, "")}-${posts[i].id}`;
-        li.classList.add("post")
-        li.appendChild(document.createTextNode(`${posts[i].title} - [${posts[i].tags.join(', ')}]`));
+        postsList.appendChild(createPostLi(posts[i]));
+    }
 
-        postsList.appendChild(li);
+    function createPostLi(post) {
+        const li = document.createElement("li");
+        li.id = `${post.title.replace(/\s/g, "")}-${post.id}`;
+        li.classList.add("post");
+
+        const titleDiv = document.createElement("div");
+        titleDiv.innerText = `${post.title} - [${post.tags.join(', ')}]`
+
+        const dateDiv = document.createElement("div");
+        dateDiv.innerText = formatDate(post.date)
+
+        li.appendChild(titleDiv);
+        li.appendChild(dateDiv);
+
+        return li;
+    }
+
+    function formatDate(datestring) {
+        const splitDate = datestring.split('-')
+        return new Date([splitDate[2], splitDate[0], splitDate[1]])
+        .toLocaleDateString('en-US', {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+        })
     }
 
     const tags = posts.reduce((acc, curr) => acc.concat(curr.tags), []);
