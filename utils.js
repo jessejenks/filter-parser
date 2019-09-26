@@ -1,3 +1,11 @@
+/* Tokenizer Util */
+function isValidDate(chars) {
+    const dateSplit = chars.split(/-|\//);
+    return !isNaN(new Date([dateSplit[2], dateSplit[0], dateSplit[1]]).getTime());
+}
+
+/* Parser Utils */
+
 function isDisjunctionToken(token) {
     return isOfTypeAndSymbol('binary-connective', 'or', token);
 }
@@ -23,7 +31,11 @@ function isBooleanLiteral(token) {
 }
 
 function isTagToken(token) {
-    return isOfType('tag', token) || isOfType('tag-literal', token);
+    return (
+        isOfType('tag', token)
+        || isOfType('tag-literal', token)
+        || isOfType('unknown-tag-literal', token)
+    );
 }
 
 function isEqualitySymbolToken(token) {

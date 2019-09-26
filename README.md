@@ -13,11 +13,8 @@ git clone https://github.com/jessejenks/filter-parser.git
 ```
 run your favorite server,
 ```
-python3 -m http.server 8000
-```
-or
-```
 python -m SimpleHTTPServer 8000
+python3 -m http.server 8000
 ```
 and then navigate to `localhost:8000` in your browser.
 
@@ -64,12 +61,12 @@ compared to one another.
 | `nice and (cool or ok) and wow` | return posts with tags `nice` and `wow` and at least one of `cool` or `ok`. |
 | `$DATE before $TODAY` |  |
 | `$DATE < $TODAY` | return posts written before, but not incuding today. |
-| `$DATE before 09-01-2019` | return posts written before September 1st, 2019. |
-| `$DATE after 09-01-2019` |  |
-| `$DATE > 09-01-2019` | return posts written after, but not incuding September 1st, 2019. |
-| `$DATE >= 09-01-2019` | return posts written on or after September 1st, 2019. |
-| `$DATE is 09-01-2019` |  |
-| `$DATE = 09-01-2019` | return posts written on the 1st of September 2019. |
+| `$DATE before 09/01/2019` | return posts written before September 1st, 2019. |
+| `$DATE after 09/01/2019` |  |
+| `$DATE > 09/01/2019` | return posts written after, but not incuding September 1st, 2019. |
+| `$DATE >= 09/01/2019` | return posts written on or after September 1st, 2019. |
+| `$DATE is 09/01/2019` |  |
+| `$DATE = 09/01/2019` | return posts written on the 1st of September 2019. |
 | `$NUM_WORDS < 50` | return posts with fewer than 50 words in them. |
 
 
@@ -80,9 +77,10 @@ compared to one another.
 | `binary-connective` | `"and"`, `"or"` |
 | `negation` | `"not"` |
 | `binary-predicate` | `is`, `=`, `before`, `after`, `<`, `<=`, `>=`, `>` |
-| `date-literal` | matches MM-DD-YYYY format |
-| `invalid-date-literal` | matches MM-DD-YYYY format |
-| | but is not an actual date |
+| `date-literal` | matches MM-DD-YYYY or MM/DD/YYYY format |
+| | e.g. `09/01/2019` or `09-01-2019` |
+| `invalid-date-literal` | matches date format but is not an real date |
+| | e.g. `09/45/2019` |
 | `number-literal` | a number (integer) |
 | | I don't allow floats for now |
 | `boolean-literal` | `true` or `false` |
@@ -94,6 +92,7 @@ compared to one another.
 | `tag-literal` | a tag but wrapped in quotes "" |
 | | this is used for tags with multiple words in them |
 | | e.g. `wow nice` is two tags, but `"wow nice"` is just one |
+| `unknown-tag-literal` | something wrapped in quotes, but didn't match any known tags |
 | `left-paren` | left parenthesis `(` |
 | `right-paren` | right parenthesis `)` |
 | `punctuation` | one of `.` `,` `:` `;` |
@@ -120,7 +119,8 @@ compared to one another.
 | LeftParen | `"("` ; |
 | RightParen | `")"` ; |
 | Tag | `[ tag ]` |
-| | `[ tag-literal ]` ; |
+| | `[ tag-literal ]` |
+| | `[ unknown-tag-literal ]` ; |
 | Comparison | DateComparison |
 | | NumberComparison ; |
 | DateComparison | DateValue (DateEqualitySymbol \| DateInequalitySymbol) DateValue ; |

@@ -111,14 +111,17 @@ class Tokenizer {
             return this.tokenOfType('unknown', startQuote+rest, spaceBefore);
         }
 
-        return this.tokenOfType('tag-literal', startQuote+rest+endQuote, spaceBefore);
+        if (this.tags.includes(rest.trim())) {
+            return this.tokenOfType('tag-literal', startQuote+rest+endQuote, spaceBefore);
+        } else {
+            return this.tokenOfType('unknown-tag-literal', startQuote+rest+endQuote, spaceBefore);
+        }
     }
 
     readDateLiteral() {
         const maybeDate = this.input.slice(this.index, this.index + 10);
-        // MM-DD-YYYY format
-        // if (/^(0[1-9]|1[0-2])-\d[1-9]-\d{4}$/g.test(maybeDate)) {
-        if (/^\d{2}-\d{2}-\d{4}$/g.test(maybeDate)) {
+        // MM-DD-YYYY or MM/DD/YYYY format
+        if (/^\d{2}(-|\/)\d{2}\1\d{4}$/g.test(maybeDate)) {
             this.index += 10;
             return maybeDate;
         }
@@ -272,6 +275,18 @@ class Tokenizer {
         return char;
     }
 
+    croak(message) {
+        const fullMessage = `${
+            message
+        }<br/>${
+            this.input.slice(0,this.index)
+        }<br/>${[...Array(this.index > 0? this.index-1 : 0)]
+            .map(() => '-').join('')
+        }^`
+
+        throw new Error(fullMessage);
+    }
+
     getTokenSpans() {
         this.reset();
         const chunks = [];
@@ -298,9 +313,4 @@ class Tokenizer {
 
         return chunks.join('');
     }
-}
-
-function isValidDate(chars) {
-    const dateSplit = chars.split('-');
-    return !isNaN(new Date([dateSplit[2], dateSplit[0], dateSplit[1]]).getTime());
 }

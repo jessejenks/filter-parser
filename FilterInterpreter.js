@@ -8,10 +8,10 @@ function interpretParseTree(tree, post) {
 
         case "disjunction":
             return interpretParseTree(tree.left, post) || interpretParseTree(tree.right, post);
-        
+
         case "conjunction":
             return interpretParseTree(tree.left, post) && interpretParseTree(tree.right, post);
-        
+
         case "negation":
             return !interpretParseTree(tree.expression, post);
 
@@ -21,7 +21,7 @@ function interpretParseTree(tree, post) {
         case "date-comparison":
             l = interpretParseTree(tree.left, post);
             r = interpretParseTree(tree.right, post);
-            
+
             switch(tree.operation.symbol) {
                 case "before":
                 case "<":
@@ -44,7 +44,7 @@ function interpretParseTree(tree, post) {
         case "number-comparison":
             l = interpretParseTree(tree.left, post);
             r = interpretParseTree(tree.right, post);
-            
+
             switch(tree.operation.symbol) {
                 case "<":
                     return l < r;
@@ -61,7 +61,7 @@ function interpretParseTree(tree, post) {
                 case "=":
                     return l === r;
             }
-        
+
         case "date-value":
         case "number-value":
             return interpretParseTree(tree.token, post);
@@ -80,7 +80,7 @@ function interpretParseTree(tree, post) {
 
         case "number-variable":
             return post.numWords;
-        
+
         case "date-literal":
             return convertDateLiteral(tree.symbol);
 
@@ -93,8 +93,12 @@ function interpretParseTree(tree, post) {
                     return post.tags.includes(tree.token.symbol);
                 case "tag-literal":
                     return post.tags.includes(tree.token.symbol.slice(1,-1).trim())
+                case "unknown-tag-literal":
+                    // presumably I could just check the post anyway
+                    // but hopefully the tokenizer and the posts agree
+                    return false;
             }
-        
+
         default:
             console.log('?', tree);
             return false;
@@ -121,7 +125,7 @@ function truncateDateToDay(d) {
 }
 
 function convertDateLiteral(datestring) {
-    const dateSplit = datestring.split('-');
+    const dateSplit = datestring.split(/-|\//);
     return new Date([dateSplit[2], dateSplit[0], dateSplit[1]]);
 }
 

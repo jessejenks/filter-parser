@@ -237,11 +237,6 @@ class FilterParser {
     }
 
     croak(message) {
-        throw new Error(message);
-
-        this.errors.push({
-            index: this.tokenizer.index,
-            message: message,
-        });
+        this.tokenizer.croak(message);
     }
 }
